@@ -44,12 +44,6 @@ require 'lib/cli/cli.php';
 require 'DouglasPeuker.php';
 \cli\register_autoload();
 
-$menu = array(
-	'State' => 'States',
-	'County' => 'Counties',
-	'Local' => 'Localities'
-);
-
 $options = array();
 
 $options["tempZip"] = sys_get_temp_dir() . '/CensusShapeConverter.zip';
@@ -59,33 +53,57 @@ if(is_dir($options['tempDir'])){
     deleteDir($options['tempDir']);
 }
 
-$options["type"] = \cli\menu($menu, null, 'Choose a Type');
 
-if($options["type"] == 'State'){
-	
-	while(!isset($chosenStateCodes)){
-		$stateCodeInput = \cli\prompt('Enter a two-letter state code or', $default = "all", $marker = ': ');
-		if(isset($stateCodes[$stateCodeInput])){
-			$chosenStateCodes = array($stateCodes[$stateCodeInput]);
-		}elseif($stateCodeInput == "all"){
-			$chosenStateCodes = array();
-			foreach($stateCodes as $key => $val){
-				$chosenStateCodes[] = $val;
-			}
-		}
-	}
-
-}
-
-$options["maxPoints"] = \cli\prompt('Enter max number of coordinate pairs', $default = '2500', $marker = ': ');
+// $options["maxPoints"] = \cli\prompt('Enter max number of coordinate pairs', $default = '2500', $marker = ': ');
 $options["outputDirectory"] = \cli\prompt('Output directory', $default = getcwd() . "/CensusShapeOutput", $marker = ': ');
 
 if (!is_dir($options['outputDirectory'])) {
     mkdir($options['outputDirectory']);
 }
 
+
+// What are we getting?
+$options["type"] = \cli\menu(array('State' => 'States', 'County' => 'Counties', 'Local' => 'Localities'), null, 'Choose a Type');
+
 if($options["type"] == 'State'){
 	
+	while(!isset($chosenStateCodes)){
+		
+		// Prompt user for input
+		$stateCodeInput = \cli\prompt('Enter a two-letter state code, multiple codes separated with commas, or', $default = "all", $marker = ': ');
+		
+		// Setup Array
+		$chosenStateCodes = array();
+	
+		// Single state
+		if(strlen($stateCodeInput) == 2){
+			if(isset($stateCodes[$stateCodeInput])){
+				$chosenStateCodes[] = $stateCodes[$stateCodeInput];
+			}
+		
+		// Comma separated	
+		}elseif(strpos($stateCodeInput,',')){
+			
+			$exploded = explode(',', $stateCodeInput);
+			
+			foreach($exploded as $single){
+				
+				$single = trim($single);
+				
+				if(isset($stateCodes[$single]) && !isset($chosenStateCodes[$stateCodes[$single]])){
+					$chosenStateCodes[] = $stateCodes[$single];
+				}
+				
+			}
+			
+		// All	
+		}elseif($stateCodeInput == "all"){
+			foreach($stateCodes as $key => $val){
+				$chosenStateCodes[] = $val;
+			}
+		}
+	}
+
    	foreach($chosenStateCodes as $chosenStateCode){
 	
 		$options["remoteDirectory"] = 'geo/tiger/TIGER2010/STATE/2010/';
