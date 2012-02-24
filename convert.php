@@ -53,17 +53,14 @@ if(is_dir($options['tempDir'])){
     deleteDir($options['tempDir']);
 }
 
-
+// What are we getting?
+$options["type"] = \cli\menu(array('State' => 'States', 'County' => 'Counties', 'Local' => 'Localities'), null, 'Choose a Type');
+$options["outputDirectory"] = \cli\prompt('Output directory', $default = substr($_SERVER['SCRIPT_FILENAME'], 0, strrpos($_SERVER['SCRIPT_FILENAME'], '/')) . "/output", $marker = ': ');
 // $options["maxPoints"] = \cli\prompt('Enter max number of coordinate pairs', $default = '2500', $marker = ': ');
-$options["outputDirectory"] = \cli\prompt('Output directory', $default = getcwd() . "/CensusShapeOutput", $marker = ': ');
 
 if (!is_dir($options['outputDirectory'])) {
     mkdir($options['outputDirectory']);
 }
-
-
-// What are we getting?
-$options["type"] = \cli\menu(array('State' => 'States', 'County' => 'Counties', 'Local' => 'Localities'), null, 'Choose a Type');
 
 if($options["type"] == 'State'){
 	
