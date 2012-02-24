@@ -150,5 +150,75 @@ if($options["type"] == 'State'){
 		}
 	}    
 
+
+
+
+}elseif($options["type"] == "County"){
+	
+	
+	while(!isset($chosenStateCode)){
+		
+		// Prompt user for input
+		$stateCodeInput = \cli\prompt('Enter a two-letter state code', $default = false, $marker = ': ');
+		
+		// Setup Array
+		$chosenStateCodes = array();
+	
+		// Single state
+		if(strlen($stateCodeInput) == 2){
+			if(isset($stateCodes[$stateCodeInput])){
+				$chosenStateCode = $stateCodes[$stateCodeInput];
+			}
+		}
+		
+	}
+	
+	$options["remoteDirectory"] = 'geo/tiger/TIGER2010/COUNTY/2010/';
+	$options["remoteFileName"] = 'tl_2010_' . $chosenStateCode . '_county10';
+
+	///////// MAKE CONNECTION, DOWNLOAD FILE ////////////
+	$conn_id = ftp_connect('ftp2.census.gov');
+	$login_result = ftp_login($conn_id, 'anonymous', '');
+	if (!ftp_get($conn_id, $options["tempZip"], $options["remoteDirectory"] . $options["remoteFileName"] . ".zip", FTP_BINARY)) {
+		\cli\err('Error contacting US Census FTP server.');
+	}
+	ftp_close($conn_id);
+	
+	//Unzip the file
+	exec('unzip ' . $options['tempZip'] . ' -d ' . $options['tempDir']);
+
+	//Convert to KML	
+	exec('ogr2ogr -f "KML" ' . $options['tempDir'] . '/output' . $chosenStateCode . '.kml ' . $options['tempDir'] . "/" . $options["remoteFileName"] . ".shp");
+
+	$fh = fopen($options['tempDir'] . "/output" . $chosenStateCode . ".kml", 'r'); 
+	$data = fread($fh, filesize($options['tempDir'] . "/output" . $chosenStateCode . ".kml")); 
+	fclose($fh);
+
+	$arrXml = array();
+	$dom    = new DOMDocument;
+	$dom->loadXML( $data );
+	
+	// List all counties
+	
+	$countyMenu = array();
+	
+	$length = $dom->getElementsByTagName( 'Placemark' )->length;
+	
+	for( $i = 0; $i < $length; $i++) {
+		
+			$placemark = $dom->getElementsByTagName( 'Placemark' )->item($i);
+
+	        $countyMenu[] = str_replace('/',' ',ltrim($placemark->getElementsByTagName('SimpleData')->item(5)->nodeValue, '0'));
+
+	}
+	
+	$options["countyIndex"] = \cli\menu($countyMenu, null, 'Choose a county');
+
+
+
+
+	
 }
-        
+ 
+
+       
