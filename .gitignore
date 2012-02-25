@@ -1,2 +1,3 @@
 *.tmproj
 output/
+.DS_Store
