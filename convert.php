@@ -130,7 +130,7 @@ if($options["type"] == 'State'){
     
 		foreach( $dom->getElementsByTagName( 'Placemark' ) as $placemark ) {
     
-		        $name = str_replace('/',' ',ltrim($placemark->getElementsByTagName('SimpleData')->item(5)->nodeValue, '0'));
+		        $name = str_replace('/',' ',ltrim($placemark->getElementsByTagName('SimpleData')->item($nameIndex)->nodeValue, '0'));
     
 		        $outputFileName = $options['outputDirectory'] . "/" . $name . ".kml";
 		        $fh = fopen($outputFileName, 'w+') or die("can't open file");
@@ -153,17 +153,14 @@ if($options["type"] == 'State'){
 
 
 
-}elseif($options["type"] == "County"){
-	
+}elseif($options["type"] == "County" ||
+		$options["type"] == "Local"){
 	
 	while(!isset($chosenStateCode)){
 		
 		// Prompt user for input
 		$stateCodeInput = \cli\prompt('Enter a two-letter state code', $default = false, $marker = ': ');
-		
-		// Setup Array
-		$chosenStateCodes = array();
-	
+			
 		// Single state
 		if(strlen($stateCodeInput) == 2){
 			if(isset($stateCodes[$stateCodeInput])){
@@ -173,8 +170,21 @@ if($options["type"] == 'State'){
 		
 	}
 	
-	$options["remoteDirectory"] = 'geo/tiger/TIGER2010/COUNTY/2010/';
-	$options["remoteFileName"] = 'tl_2010_' . $chosenStateCode . '_county10';
+	if($options["type"] == "County"){
+		$singular = "County";
+		$plural = "Counties";
+		$options["remoteDirectory"] = 'geo/tiger/TIGER2010/COUNTY/2010/';
+		$options["remoteFileName"] = 'tl_2010_' . $chosenStateCode . '_county10';
+		$nameIndex = 5;
+	}else{
+		$singular = "Locality";
+		$plural = "Localities";
+		$options["remoteDirectory"] = 'geo/tiger/TIGER2010/PLACE/2010/';
+		$options["remoteFileName"] = 'tl_2010_' . $chosenStateCode . '_place10';
+		$nameIndex = 4;
+	}
+	
+
 
 	///////// MAKE CONNECTION, DOWNLOAD FILE ////////////
 	$conn_id = ftp_connect('ftp2.census.gov');
@@ -198,7 +208,7 @@ if($options["type"] == 'State'){
 	$dom    = new DOMDocument;
 	$dom->loadXML( $data );
 	
-	// List all counties
+	// List all counties/localities
 	
 	$countyMenu = array();
 	
@@ -208,17 +218,54 @@ if($options["type"] == 'State'){
 		
 			$placemark = $dom->getElementsByTagName( 'Placemark' )->item($i);
 
-	        $countyMenu[] = str_replace('/',' ',ltrim($placemark->getElementsByTagName('SimpleData')->item(5)->nodeValue, '0'));
+	        $countyMenu[] = str_replace('/',' ',ltrim($placemark->getElementsByTagName('SimpleData')->item($nameIndex)->nodeValue, '0'));
 
 	}
 	
-	$options["countyIndex"] = \cli\menu($countyMenu, null, 'Choose a county');
-
-
-
-
+	asort($countyMenu);
 	
+	$countyMenu["all"] = "=== ALL ===";
+	
+	$countyIndex = \cli\menu($countyMenu, null, 'Choose a ' . $singular);
+	
+	if($countyIndex == "all"){
+		
+		foreach($dom->getElementsByTagName( 'Placemark' ) as $placemark){
+			$placemarks[] = $placemark;
+		}
+		
+	}else{
+		$placemarks[] = $dom->getElementsByTagName( 'Placemark' )->item($countyIndex);		
+	}
+	
+	foreach($placemarks as $placemark){
+		
+		$name = str_replace('/',' ',ltrim($placemark->getElementsByTagName('SimpleData')->item($nameIndex)->nodeValue, '0'));
+		
+		if (!is_dir($options['outputDirectory'] . "/" . strtoupper($stateCodeInput))) {
+		    mkdir($options['outputDirectory'] . "/" . strtoupper($stateCodeInput));
+		}
+		
+		if (!is_dir($options['outputDirectory'] . "/" . strtoupper($stateCodeInput) . "/" . $plural . "/")) {
+		    mkdir($options['outputDirectory'] . "/" . strtoupper($stateCodeInput) . "/" . $plural . "/");
+		}
+		
+	    $outputFileName = $options['outputDirectory'] . "/" . strtoupper($stateCodeInput) . "/" . $plural . "/" . $name . ".kml";
+	    $fh = fopen($outputFileName, 'w+') or die("can't open file");
+
+	    fwrite($fh, 
+		    '<?xml version="1.0" encoding="utf-8" ?>' .
+	    	'<kml xmlns="http://www.opengis.net/kml/2.2">' .
+	    	'<Document><Folder><name>' . $name . '</name>' . 
+	    	$dom->saveXML( $placemark ) 
+	    	. '</Folder></Document></kml>'   
+			);
+
+	    fclose($fh);
+
+	    \cli\line("%C%5 Wrote $name %5%n");
+	
+	}
+
 }
  
-
-       
