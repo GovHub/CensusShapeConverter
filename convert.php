@@ -55,7 +55,7 @@ if(is_dir($options['tempDir'])){
 
 // What are we getting?
 $options["type"] = \cli\menu(array('State' => 'States', 'County' => 'Counties', 'Local' => 'Localities'), null, 'Choose a Type');
-$options["outputDirectory"] = \cli\prompt('Output directory', $default = substr($_SERVER['SCRIPT_FILENAME'], 0, strrpos($_SERVER['SCRIPT_FILENAME'], '/')) . "/output", $marker = ': ');
+$options["outputDirectory"] = \cli\prompt('Output directory', $default = getcwd() . "/CensusShapeOutput", $marker = ': ');
 // $options["maxPoints"] = \cli\prompt('Enter max number of coordinate pairs', $default = '2500', $marker = ': ');
 
 if (!is_dir($options['outputDirectory'])) {
@@ -130,7 +130,7 @@ if($options["type"] == 'State'){
     
 		foreach( $dom->getElementsByTagName( 'Placemark' ) as $placemark ) {
     
-		        $name = str_replace('/',' ',ltrim($placemark->getElementsByTagName('SimpleData')->item($nameIndex)->nodeValue, '0'));
+		        $name = str_replace('/',' ',ltrim($placemark->getElementsByTagName('SimpleData')->item(5)->nodeValue, '0'));
     
 		        $outputFileName = $options['outputDirectory'] . "/" . $name . ".kml";
 		        $fh = fopen($outputFileName, 'w+') or die("can't open file");
