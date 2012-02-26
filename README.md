@@ -1,4 +1,4 @@
-## GovHub's Census Shape Converter
+## [GovHub](http://www.mygovhub.org)'s Census Shape Converter
 
 The Census Shape Converter, (or CSC, for lack of a better name,) helps decipher the vast U.S. government repository of [map shapes from the 2010 census](http://www.census.gov/geo/www/tiger/tgrshp2010/tgrshp2010.html) into .kml files, a more universal format.
 
