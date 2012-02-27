@@ -1,5 +1,16 @@
 <?php
 
+// Check for ogr2ogr existence
+if( function_exists('exec') )
+{
+    // send test command to system
+    exec('command -v ogr2ogr >& /dev/null && echo "Found" || echo "Not Found"', $output);
+
+    if( $output[0] == "Not Found" ) {
+		die("\nogr2ogr not found. Make sure you've installed the GDAL/OGR binaries and followed the instructions to add their programs to your ~/.bash-profile.\n\n");
+    }
+}
+
 $stateCodes = array("AL"=>"01","AK"=>"02","AZ"=>"04","AR"=>"05","CA"=>"06","CO"=>"08","CT"=>"09","DE"=>"10","DC"=>"11","FL"=>"12","GA"=>"13","HI"=>"15","ID"=>"16","IL"=>"17","IN"=>"18","IA"=>"19","KS"=>"20","KY"=>"21","LA"=>"22","ME"=>"23","MD"=>"24","MA"=>"25","MI"=>"26","MN"=>"27","MS"=>"28","MO"=>"29","MT"=>"30","NE"=>"31","NV"=>"32","NH"=>"33","NJ"=>"34","NM"=>"35","NY"=>"36","NC"=>"37","ND"=>"38","OH"=>"39","OK"=>"40","OR"=>"41","PA"=>"42","RI"=>"44","SC"=>"45","SD"=>"46","TN"=>"47","TX"=>"48","UT"=>"49","VT"=>"50","VA"=>"51","WA"=>"53","WV"=>"54","WI"=>"55","WY"=>"56","AS"=>"60","GU"=>"66","MP"=>"69","PR"=>"72","VI"=>"78");
 
 class GeoPoint {
@@ -67,7 +78,7 @@ if($options["type"] == 'State'){
 	while(!isset($chosenStateCodes)){
 		
 		// Prompt user for input
-		$stateCodeInput = \cli\prompt('Enter a two-letter state code, multiple codes separated with commas, or', $default = "all", $marker = ': ');
+		$stateCodeInput = strtoupper(\cli\prompt('Enter a two-letter state code, multiple codes separated with commas, or', $default = "all", $marker = ': '));
 		
 		// Setup Array
 		$chosenStateCodes = array();
@@ -159,7 +170,7 @@ if($options["type"] == 'State'){
 	while(!isset($chosenStateCode)){
 		
 		// Prompt user for input
-		$stateCodeInput = \cli\prompt('Enter a two-letter state code', $default = false, $marker = ': ');
+		$stateCodeInput = strtoupper(\cli\prompt('Enter a two-letter state code', $default = false, $marker = ': '));
 			
 		// Single state
 		if(strlen($stateCodeInput) == 2){
