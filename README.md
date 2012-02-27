@@ -12,7 +12,7 @@ Currently, CSC does these things:
 
 CSC is designed to be run from the command-line, so there's no trickery to installing it.
 
-**You *will* have to install its one dependency**, the [GDAL/OGR Binaries](http://trac.osgeo.org/gdal/wiki/DownloadingGdalBinaries), which are used for conversion to .kml. 
+**You *will* have to install its one dependency**, the [GDAL/OGR Binaries](http://trac.osgeo.org/gdal/wiki/DownloadingGdalBinaries), which are used for conversion to .kml. Follow the instructions in the GDAL Readme to add ogr2ogr to your `~/.bash-profile`.
 
 After that, just run `php convert.php` in the command-line, and the script will guide you through the rest.
 
