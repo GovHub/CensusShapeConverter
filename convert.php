@@ -4,7 +4,7 @@
 if( function_exists('exec') )
 {
     // send test command to system
-    exec('command -v ogr2ogr >& /dev/null && echo "Found" || echo "Not Found"', $output);
+    exec('command -v ogr2ogr >&1 > /dev/null && echo "Found" || echo "Not Found"', $output);
 
     if( $output[0] == "Not Found" ) {
 		die("\nogr2ogr not found. Make sure you've installed the GDAL/OGR binaries and followed the instructions to add their programs to your ~/.bash-profile.\n\n");
