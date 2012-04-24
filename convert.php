@@ -42,6 +42,39 @@ function deleteDir($dirPath) {
     rmdir($dirPath);
 }
 
+function reduceUsingDp($elements, $tolerance) {
+	foreach($elements as $coordinatesElement){
+		
+	    $coords = $coordinatesElement->nodeValue . "\n";
+	    $threepoints = preg_split("/[\s]+/", $coords);
+	    $points = array();
+	
+	    foreach($threepoints as $threepoint){
+	        $pnt = explode(",", $threepoint);
+		    if(isset($pnt[0]) && isset($pnt[1])){
+		        $points[] = new GeoPoint($pnt[0], $pnt[1]);
+			}
+	    }
+
+	    $reducer = new PolylineReducer($points);
+	    $simple_line = $reducer->SimplerLine(0);
+
+	    print "    Starting with " . count($simple_line) . " points.\n";
+
+	    $reducer = new PolylineReducer($simple_line);
+	    $simple_line = $reducer->SimplerLine($tolerance);
+        
+	    print "    Reduced to " . count($simple_line) . " points.\n";
+
+	    $coordinatesElement->nodeValue = "";
+	    foreach($simple_line as $point){
+	        if($point->latitude != 0){
+	            $coordinatesElement->nodeValue .= $point->latitude . ',' . $point->longitude . ' ';            
+	        }
+	    }
+	}
+}
+
 if (php_sapi_name() != 'cli') {
 	die('Must run from command line');
 }
@@ -67,7 +100,7 @@ if(is_dir($options['tempDir'])){
 // What are we getting?
 $options["type"] = \cli\menu(array('State' => 'States', 'County' => 'Counties', 'Local' => 'Localities'), null, 'Choose a Type');
 $options["outputDirectory"] = \cli\prompt('Output directory', $default = getcwd() . "/CensusShapeOutput", $marker = ': ');
-// $options["maxPoints"] = \cli\prompt('Enter max number of coordinate pairs', $default = '2500', $marker = ': ');
+$options["tolerance"] = \cli\prompt('Douglas-Peuker Tolerance (Optional, 0.001 is a good place to start)', $default = '0', $marker = ': ');
 
 if (!is_dir($options['outputDirectory'])) {
     mkdir($options['outputDirectory']);
@@ -105,7 +138,7 @@ if($options["type"] == 'State'){
 			}
 			
 		// All	
-		}elseif($stateCodeInput == "all"){
+		}elseif($stateCodeInput == "ALL"){
 			foreach($stateCodes as $key => $val){
 				$chosenStateCodes[] = $val;
 			}
@@ -128,7 +161,7 @@ if($options["type"] == 'State'){
 		//Unzip the file
 		exec('unzip ' . $options['tempZip'] . ' -d ' . $options['tempDir']);
     
-		//Convert to KML	
+		//Convert to KML
 		exec('ogr2ogr -f "KML" ' . $options['tempDir'] . '/output' . $chosenStateCode . '.kml ' . $options['tempDir'] . "/" . $options["remoteFileName"] . ".shp");
     
 		$fh = fopen($options['tempDir'] . "/output" . $chosenStateCode . ".kml", 'r'); 
@@ -136,12 +169,16 @@ if($options["type"] == 'State'){
 		fclose($fh);
     
 		$arrXml = array();
-		$dom    = new DOMDocument;
+		$dom = new DOMDocument;
 		$dom->loadXML( $data );
     
 		foreach( $dom->getElementsByTagName( 'Placemark' ) as $placemark ) {
     
 		        $name = str_replace('/',' ',ltrim($placemark->getElementsByTagName('SimpleData')->item(5)->nodeValue, '0'));
+													
+				if($options["tolerance"]){
+					reduceUsingDp($placemark->getElementsByTagName('coordinates'), $options["tolerance"]);					
+				}
     
 		        $outputFileName = $options['outputDirectory'] . "/" . $name . ".kml";
 		        $fh = fopen($outputFileName, 'w+') or die("can't open file");
@@ -154,15 +191,12 @@ if($options["type"] == 'State'){
 					. '</Folder></Document></kml>'   
 				);
     
-		        fclose($fh);
+		        fclose($fh);		
     
 		        \cli\line("%C%5 Wrote $name %5%n");
     
 		}
 	}    
-
-
-
 
 }elseif($options["type"] == "County" ||
 		$options["type"] == "Local"){
@@ -259,6 +293,10 @@ if($options["type"] == 'State'){
 		
 		if (!is_dir($options['outputDirectory'] . "/" . strtoupper($stateCodeInput) . "/" . $plural . "/")) {
 		    mkdir($options['outputDirectory'] . "/" . strtoupper($stateCodeInput) . "/" . $plural . "/");
+		}
+		
+		if($options["tolerance"]){
+			reduceUsingDp($placemark->getElementsByTagName('coordinates'), $options["tolerance"]);					
 		}
 		
 	    $outputFileName = $options['outputDirectory'] . "/" . strtoupper($stateCodeInput) . "/" . $plural . "/" . $name . ".kml";
