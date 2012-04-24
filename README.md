@@ -18,7 +18,7 @@ After that, just run `php convert.php` in the command-line, and the script will 
 
 #### @Todo
 
-- Add option to reduce map shapes using the Douglas-Peuker Algorithm.
+- Support other regions, e.g. school districts, zip codes, etc.
 
 ##### Credits
 
