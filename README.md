@@ -7,6 +7,7 @@ Currently, CSC does these things:
 1. Grabs an archive from the U.S. Census FTP archive.
 2. Converts your choice of States, Counties, or Localities to .kml format
 3. Separates the different maps into a coherent file structure.
+4. (Optionally) reduces the size of the .kml file using the [Douglas-Peuker algorithm](http://www.phpriot.com/articles/reducing-map-path-douglas-peucker-algorithm).
 
 ## Installation
 
