@@ -176,21 +176,20 @@ if($options["type"] == 'Congressional Districts'){
   
 		        $name = str_replace('/',' ',ltrim($placemark->getElementsByTagName('SimpleData')->item(3)->nodeValue, '0'));
 		        $name = trim(str_replace('Congressional District', '', $name));
+		        
+		        if ($name == "(at Large)"){
+		            $name = "-ATLARGE";
+		        }
 													
 				if($options["tolerance"]){
 					reduceUsingDp($placemark->getElementsByTagName('coordinates'), $options["tolerance"]);					
 				}
 				
-				if (!is_dir($options['outputDirectory'] . "/" . strtoupper($stateCodeInput) . "/")) {
-        		    mkdir($options['outputDirectory'] . "/" . strtoupper($stateCodeInput) . "/");
-        		}
-				
-				if (!is_dir($options['outputDirectory'] . "/" . strtoupper($stateCodeInput) . "/Lower/")) {
-        		    mkdir($options['outputDirectory'] . "/" . strtoupper($stateCodeInput) . "/Lower/");
+				if (!is_dir($options['outputDirectory'] . "/Lower/")) {
+        		    mkdir($options['outputDirectory'] . "/Lower/");
         		}
   
-		        $outputFileName = $options['outputDirectory'] . "/" . strtoupper($stateCodeInput) 
-		                          . "/Lower/" . $name . ".kml";
+		        $outputFileName = $options['outputDirectory'] . "/Lower/" . strtoupper($stateCodeInput) . $name . ".kml";
 		        $fh = fopen($outputFileName, 'w+') or die("can't open file");
   
 		        fwrite($fh, 
