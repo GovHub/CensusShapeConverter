@@ -189,7 +189,7 @@ if($options["type"] == 'Congressional Districts'){
         		    mkdir($options['outputDirectory'] . "/Lower/");
         		}
   
-		        $outputFileName = $options['outputDirectory'] . "/Lower/" . strtoupper($stateCodeInput) . $name . ".kml";
+		        $outputFileName = $options['outputDirectory'] . "/Lower/" . array_search($chosenStateCode, $stateCodes) . $name . ".kml";
 		        $fh = fopen($outputFileName, 'w+') or die("can't open file");
   
 		        fwrite($fh, 
