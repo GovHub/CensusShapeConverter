@@ -98,7 +98,7 @@ if(is_dir($options['tempDir'])){
 }
 
 // What are we getting?
-$options["type"] = \cli\menu(array('State' => 'States', 'County' => 'Counties', 'Local' => 'Localities'), null, 'Choose a Type');
+$options["type"] = \cli\menu(array('Congressional Districts' => 'Congressional Districts', 'State' => 'States', 'County' => 'Counties', 'Local' => 'Localities'), null, 'Choose a Type');
 $options["outputDirectory"] = \cli\prompt('Output directory', $default = getcwd() . "/CensusShapeOutput", $marker = ': ');
 $options["tolerance"] = \cli\prompt('Douglas-Peuker Tolerance (Optional, 0.001 is a good place to start)', $default = '0', $marker = ': ');
 
@@ -106,7 +106,115 @@ if (!is_dir($options['outputDirectory'])) {
     mkdir($options['outputDirectory']);
 }
 
-if($options["type"] == 'State'){
+if($options["type"] == 'Congressional Districts'){
+
+  while(!isset($chosenStateCodes)){
+		
+  	// Prompt user for input
+  	$stateCodeInput = strtoupper(\cli\prompt('Enter a two-letter state code, multiple codes separated with commas, or', $default = "all", $marker = ': '));
+  	
+  	// Setup Array
+  	$chosenStateCodes = array();
+  
+  	// Single state
+  	if(strlen($stateCodeInput) == 2){
+  		if(isset($stateCodes[$stateCodeInput])){
+  			$chosenStateCodes[] = $stateCodes[$stateCodeInput];
+  		}
+  	
+  	// Comma separated	
+  	}elseif(strpos($stateCodeInput,',')){
+  		
+  		$exploded = explode(',', $stateCodeInput);
+  		
+  		foreach($exploded as $single){
+  			
+  			$single = trim($single);
+  			
+  			if(isset($stateCodes[$single]) && !isset($chosenStateCodes[$stateCodes[$single]])){
+  				$chosenStateCodes[] = $stateCodes[$single];
+  			}
+  			
+  		}
+  		
+  	// All	
+  	}elseif($stateCodeInput == "ALL"){
+  		foreach($stateCodes as $key => $val){
+  			$chosenStateCodes[] = $val;
+  		}
+  	}
+  }
+  
+  	foreach($chosenStateCodes as $chosenStateCode){
+	
+		$options["remoteDirectory"] = 'geo/tiger/TIGER2010/CD/111/';
+		$options["remoteFileName"] = 'tl_2010_' . $chosenStateCode . '_cd111';
+	
+		///////// MAKE CONNECTION, DOWNLOAD FILE ////////////
+		$conn_id = ftp_connect('ftp2.census.gov');
+		$login_result = ftp_login($conn_id, 'anonymous', '');
+		if (!ftp_get($conn_id, $options["tempZip"], $options["remoteDirectory"] . $options["remoteFileName"] . ".zip", FTP_BINARY)) {
+			\cli\err('Error contacting US Census FTP server.');
+		}
+		ftp_close($conn_id);
+  
+		//Unzip the file
+		exec('unzip ' . $options['tempZip'] . ' -d ' . $options['tempDir']);
+  
+		//Convert to KML
+		exec('ogr2ogr -f "KML" ' . $options['tempDir'] . '/output' . $chosenStateCode . '.kml ' . $options['tempDir'] . "/" . $options["remoteFileName"] . ".shp");
+  
+		$fh = fopen($options['tempDir'] . "/output" . $chosenStateCode . ".kml", 'r'); 
+		$data = fread($fh, filesize($options['tempDir'] . "/output" . $chosenStateCode . ".kml")); 
+		fclose($fh);
+  
+		$arrXml = array();
+		$dom = new DOMDocument;
+		$dom->loadXML( $data );
+  
+		foreach( $dom->getElementsByTagName( 'Placemark' ) as $placemark ) {
+  
+		        $name = str_replace('/',' ',ltrim($placemark->getElementsByTagName('SimpleData')->item(3)->nodeValue, '0'));
+		        $name = trim(str_replace('Congressional District', '', $name));
+													
+				if($options["tolerance"]){
+					reduceUsingDp($placemark->getElementsByTagName('coordinates'), $options["tolerance"]);					
+				}
+				
+				if (!is_dir($options['outputDirectory'] . "/" . strtoupper($stateCodeInput) . "/")) {
+        		    mkdir($options['outputDirectory'] . "/" . strtoupper($stateCodeInput) . "/");
+        		}
+				
+				if (!is_dir($options['outputDirectory'] . "/" . strtoupper($stateCodeInput) . "/Lower/")) {
+        		    mkdir($options['outputDirectory'] . "/" . strtoupper($stateCodeInput) . "/Lower/");
+        		}
+  
+		        $outputFileName = $options['outputDirectory'] . "/" . strtoupper($stateCodeInput) 
+		                          . "/Lower/" . $name . ".kml";
+		        $fh = fopen($outputFileName, 'w+') or die("can't open file");
+  
+		        fwrite($fh, 
+					'<?xml version="1.0" encoding="utf-8" ?>' .
+					'<kml xmlns="http://www.opengis.net/kml/2.2">' .
+					'<Document><Folder><name>' . $name . '</name>' . 
+			     	$dom->saveXML( $placemark ) 
+					. '</Folder></Document></kml>'   
+				);
+  
+		        fclose($fh);		
+  
+		        \cli\line("%C%5 Wrote $name %5%n");
+  
+		}
+	}    
+ 
+  
+  
+  
+
+
+
+}elseif($options["type"] == 'State'){
 	
 	while(!isset($chosenStateCodes)){
 		
