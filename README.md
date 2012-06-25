@@ -5,7 +5,7 @@ The Census Shape Converter, (or CSC, for lack of a better name,) helps decipher 
 Currently, CSC does these things:
 
 1. Grabs an archive from the U.S. Census FTP archive.
-2. Converts your choice of States, Counties, or Localities to .kml format
+2. Converts your choice of Congressional Districts, States, Counties, or Localities to .kml format
 3. Separates the different maps into a coherent file structure.
 4. (Optionally) reduces the size of the .kml file using the [Douglas-Peuker algorithm](http://www.phpriot.com/articles/reducing-map-path-douglas-peucker-algorithm).
 
