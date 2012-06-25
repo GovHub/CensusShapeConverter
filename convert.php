@@ -1,5 +1,7 @@
 <?php
 
+ini_set('memory_limit','-1');
+
 // Check for ogr2ogr existence
 if( function_exists('exec') )
 {
